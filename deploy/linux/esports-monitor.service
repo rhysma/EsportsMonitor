@@ -1,0 +1,28 @@
+# systemd unit: keeps the monitor running and restarts it after crashes or reboots.
+#   sudo cp esports-monitor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now esports-monitor
+#   sudo journalctl -u esports-monitor -f      # view logs
+
+[Unit]
+Description=Ozarks Tech Esports PC Install Monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=esportsmon
+Group=esportsmon
+WorkingDirectory=/opt/esports-monitor/server
+ExecStart=/usr/bin/python3 /opt/esports-monitor/server/server.py
+Restart=always
+RestartSec=5
+
+# Lock the process down: it only needs to write its own database
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/esports-monitor/server
+
+[Install]
+WantedBy=multi-user.target

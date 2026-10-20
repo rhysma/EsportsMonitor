@@ -1,0 +1,9 @@
+# Caddy gets and renews a free HTTPS certificate automatically.
+# Replace the hostname with the DNS name you pointed at your Lightsail static IP.
+# Use this if nothing else on the server is using ports 80/443.
+# (Already running nginx or Apache? Use nginx-esports-monitor.conf instead.)
+
+esports-monitor.example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:8080
+}

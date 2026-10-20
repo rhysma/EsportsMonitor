@@ -32,8 +32,20 @@ FAIL_LIMIT = 10          # bad key/password attempts allowed per IP...
 FAIL_WINDOW = 15 * 60    # ...within this many seconds, before the IP is locked out
 
 
+LOG_FILE = None  # set in main(); running as a background task on Windows there's no console to read
+
+
 def log(msg):
-    print(time.strftime("%Y-%m-%d %H:%M:%S"), msg, flush=True)
+    line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {msg}"
+    print(line, flush=True)
+    if LOG_FILE:
+        try:
+            if os.path.exists(LOG_FILE) and os.path.getsize(LOG_FILE) > 5_000_000:
+                os.replace(LOG_FILE, LOG_FILE + ".old")
+            with open(LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except OSError:
+            pass
 
 
 # --------------------------------------------------------------------------
@@ -349,6 +361,11 @@ class Handler(BaseHTTPRequestHandler):
             fwd = self.headers.get("X-Forwarded-For", "")
             if fwd:
                 ip = fwd.split(",")[-1].strip()
+                # IIS ARR sends "1.2.3.4:51234" or "[::1]:51234"; drop the port
+                if ip.startswith("["):
+                    ip = ip[1:].split("]")[0]
+                elif ip.count(":") == 1:
+                    ip = ip.split(":")[0]
         return ip
 
     def _send(self, code, body, ctype="application/json"):
@@ -459,7 +476,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    global LOG_FILE
     cfg = config()
+    LOG_FILE = os.path.join(BASE, cfg.get("log_file") or "monitor.log")
     key = str(cfg.get("agent_key") or "")
     host = cfg.get("listen_host", "0.0.0.0")
     exposed = cfg.get("behind_proxy") or host not in ("127.0.0.1", "localhost", "::1")
@@ -472,6 +491,9 @@ def main():
             log("ERROR: dashboard_password is empty. This server is internet-facing, so a password is required.")
             return 1
         log("WARNING: dashboard_password is empty; anyone who can reach this server can view the dashboard.")
+    if "--check" in sys.argv:
+        log("config.json looks good.")
+        return 0
     init_db()
     threading.Thread(target=offline_watcher, daemon=True).start()
     port = int(cfg.get("listen_port", 8080))
