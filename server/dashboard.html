@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esports PC Monitor</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --ink:#16181d; --muted:#626a77; --line:#e1e4ea;
+  --ok:#1f8a4c; --ok-bg:#e3f4ea; --warn:#a86400; --warn-bg:#fcf0d9;
+  --bad:#c4291c; --bad-bg:#fbe4e1; --off:#6b7280; --off-bg:#eceef1; --accent:#2457d6;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101217; --panel:#181b22; --ink:#e8eaee; --muted:#9aa2b1; --line:#2a2f3a;
+    --ok:#4cc985; --ok-bg:#15301f; --warn:#f0b04a; --warn-bg:#33270f;
+    --bad:#ff7a6b; --bad-bg:#3a1a17; --off:#9aa2b1; --off-bg:#23272f; --accent:#7aa2ff;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:18px 20px 6px}
+h1{font-size:20px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+main{padding:8px 20px 40px;max-width:1500px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0 18px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+.tile .n{font-size:28px;font-weight:650;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.tile.sel{outline:2px solid var(--accent);outline-offset:-1px}
+.tile.problem .n{color:var(--bad)} .tile.warning .n{color:var(--warn)} .tile.ok .n{color:var(--ok)} .tile.offline .n{color:var(--off)}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}
+section>h2{font-size:14px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+section>h2 span{color:var(--muted);font-weight:400}
+.attn{list-style:none;margin:0;padding:0}
+.attn li{display:flex;gap:10px;align-items:flex-start;padding:9px 14px;border-bottom:1px solid var(--line)}
+.attn li:last-child{border-bottom:0}
+.attn .host{font-weight:600;min-width:110px}
+.attn .msgs{flex:1}
+.empty{padding:16px 14px;color:var(--muted)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warning{background:var(--warn-bg);color:var(--warn)}
+.pill.problem{background:var(--bad-bg);color:var(--bad)} .pill.offline{background:var(--off-bg);color:var(--off)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+td.h,th.h{text-align:left;position:sticky;left:0;background:var(--panel)}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+.cell{display:inline-flex;width:24px;height:24px;border-radius:6px;align-items:center;justify-content:center;font-weight:700;cursor:help}
+.cell.y{background:var(--ok-bg);color:var(--ok)} .cell.n{background:var(--bad-bg);color:var(--bad)}
+.cell.a{background:var(--warn-bg);color:var(--warn)} .cell.u{background:var(--off-bg);color:var(--off)}
+tr.stale td:not(.h){opacity:.55}
+.disk{display:inline-block;min-width:80px;text-align:left}
+.bar{height:5px;border-radius:3px;background:var(--off-bg);overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.bar i.low{background:var(--warn)}
+.dk{font-size:12px;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+button.x{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;font:inherit;font-size:12px}
+button.x:hover{color:var(--bad);border-color:var(--bad)}
+.log{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}
+.log li{display:grid;grid-template-columns:120px 140px 1fr;gap:8px;padding:6px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.log .t{color:var(--muted);font-variant-numeric:tabular-nums}
+.k-problem{color:var(--bad)} .k-warning{color:var(--warn)} .k-resolved,.k-online{color:var(--ok)} .k-offline,.k-info{color:var(--muted)}
+.err{background:var(--bad-bg);color:var(--bad);padding:10px 14px;border-radius:8px;margin:10px 0;display:none}
+@media (max-width:640px){
+  header,main{padding-left:16px;padding-right:16px}
+  .log li{grid-template-columns:1fr;gap:0}
+  .attn li{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Esports PC Monitor</h1>
+  <span class="sub" id="updated">Loading…</span>
+</header>
+<main>
+  <div class="err" id="err"></div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section>
+    <h2>Needs attention <span id="attnCount"></span></h2>
+    <ul class="attn" id="attn"></ul>
+  </section>
+
+  <section>
+    <h2>All PCs <span id="filterLabel"></span></h2>
+    <div class="scroll"><table id="matrix"></table></div>
+  </section>
+
+  <section>
+    <h2>Activity <span id="discordNote"></span></h2>
+    <ul class="log" id="log"></ul>
+  </section>
+</main>
+
+<script>
+const REFRESH_MS = 30000;
+let filter = "all";
+let data = null;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago = ts => {
+  const s = Math.max(0, Date.now()/1000 - ts);
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s/60) + " min ago";
+  if (s < 86400) return Math.round(s/3600) + " hr ago";
+  return Math.round(s/86400) + " days ago";
+};
+const when = ts => new Date(ts*1000).toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+const RANK = {problem:0, warning:1, offline:2, ok:3};
+const LABEL = {problem:"Problem", warning:"Warning", offline:"Offline", ok:"OK"};
+
+async function load(){
+  try{
+    const r = await fetch("api/status", {cache:"no-store"});
+    if (!r.ok) throw new Error("Server returned " + r.status);
+    data = await r.json();
+    document.getElementById("err").style.display = "none";
+    render();
+  }catch(e){
+    const el = document.getElementById("err");
+    el.textContent = "Can't reach the monitor server: " + e.message + ". Retrying…";
+    el.style.display = "block";
+  }
+}
+
+function render(){
+  const pcs = data.pcs;
+  document.getElementById("updated").textContent =
+    `${pcs.length} PCs · updated ${new Date(data.generated_at*1000).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})} · refreshes every 30s`;
+
+  // tiles
+  const counts = {problem:0, warning:0, offline:0, ok:0};
+  pcs.forEach(p => counts[p.status]++);
+  const tiles = [["all","All PCs",pcs.length],["problem","Problems",counts.problem],["warning","Warnings",counts.warning],["offline","Offline",counts.offline],["ok","All good",counts.ok]];
+  document.getElementById("tiles").innerHTML = tiles.map(([k,l,n]) =>
+    `<button class="tile ${k} ${filter===k?"sel":""}" data-f="${k}"><div class="n">${n}</div><div class="l">${l}</div></button>`).join("");
+  document.querySelectorAll(".tile").forEach(t => t.onclick = () => { filter = t.dataset.f; render(); });
+
+  // needs attention (online PCs with issues, worst first)
+  const attn = pcs.filter(p => p.online && p.issues.length).sort((a,b) => RANK[a.status]-RANK[b.status] || a.hostname.localeCompare(b.hostname));
+  document.getElementById("attnCount").textContent = attn.length ? `${attn.length} PC${attn.length>1?"s":""}` : "";
+  document.getElementById("attn").innerHTML = attn.length ? attn.map(p => `
+    <li><span class="pill ${p.status}">${LABEL[p.status]}</span>
+      <span class="host">${esc(p.hostname)}</span>
+      <span class="msgs">${p.issues.sort((a,b)=> (a.severity==="problem"?0:1)-(b.severity==="problem"?0:1)).map(i => esc(i.message)).join("<br>")}</span>
+      <span class="muted">${ago(p.last_seen)}</span></li>`).join("")
+    : `<li class="empty">${pcs.length ? "Every online PC has all required software. 🎮" : "No PCs have reported yet. Install the agent on a PC and it will appear here within a minute."}</li>`;
+
+  // matrix
+  const shown = pcs.filter(p => filter==="all" || p.status===filter)
+                   .sort((a,b) => a.hostname.localeCompare(b.hostname, undefined, {numeric:true}));
+  document.getElementById("filterLabel").textContent = filter==="all" ? "" : `showing ${LABEL[filter].toLowerCase()} only`;
+  const apps = data.apps;
+  const low = data.settings.low_disk_gb;
+  let html = `<thead><tr><th class="h">PC</th><th>Status</th>${apps.map(a=>`<th>${esc(a.name)}</th>`).join("")}<th>Disk free</th><th>Last report</th><th></th></tr></thead><tbody>`;
+  for (const p of shown){
+    const res = Object.fromEntries(p.apps.map(a => [a.id, a]));
+    html += `<tr class="${p.online?"":"stale"}"><td class="h"><b>${esc(p.hostname)}</b></td><td><span class="pill ${p.status}">${LABEL[p.status]}</span></td>`;
+    for (const a of apps){
+      const r = res[a.id];
+      let cls="u", sym="?", tip="Not checked yet (agent will pick this up on its next run)";
+      if (r){
+        if (!r.installed && r.error){ cls="a"; sym="!"; tip="Check failed: " + r.error; }
+        else if (!r.installed){ cls="n"; sym="✕"; tip=r.detail || "Not found"; }
+        else if (r.needs_attention){ cls="a"; sym="!"; tip=r.detail; }
+        else { cls="y"; sym="✓"; tip=r.detail; }
+      }
+      html += `<td><span class="cell ${cls}" title="${esc(a.name)}: ${esc(tip)}">${sym}</span></td>`;
+    }
+    html += `<td>${p.disks.map(d => {
+      const pct = d.total_gb ? Math.round(100*(d.total_gb-d.free_gb)/d.total_gb) : 0;
+      return `<div class="disk"><div class="dk">${esc(d.drive)} ${Math.round(d.free_gb)} GB</div><div class="bar"><i class="${d.free_gb<low?"low":""}" style="width:${pct}%"></i></div></div>`;
+    }).join(" ")}</td>`;
+    html += `<td class="muted" title="${esc(when(p.last_seen))}">${ago(p.last_seen)}</td>`;
+    html += `<td><button class="x" data-h="${esc(p.hostname)}" title="Remove a retired PC from the dashboard">Remove</button></td></tr>`;
+  }
+  if (!shown.length) html += `<tr><td class="h muted" colspan="${apps.length+5}">No PCs in this view.</td></tr>`;
+  document.getElementById("matrix").innerHTML = html + "</tbody>";
+  document.querySelectorAll("button.x").forEach(b => b.onclick = async () => {
+    const h = b.dataset.h;
+    if (!confirm(`Remove ${h} from the dashboard?\n\nIf its agent is still installed it will reappear on its next report.`)) return;
+    await fetch("api/pcs/" + encodeURIComponent(h), {method:"DELETE"});
+    load();
+  });
+
+  // activity
+  document.getElementById("discordNote").textContent = data.settings.discord ? "Discord alerts on" : "Discord alerts off";
+  document.getElementById("log").innerHTML = data.events.length ? data.events.map(e =>
+    `<li><span class="t">${esc(when(e.ts))}</span><b>${esc(e.hostname)}</b><span class="k-${esc(e.kind)}">${esc(e.message)}</span></li>`).join("")
+    : `<li class="empty">Nothing yet.</li>`;
+}
+
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>

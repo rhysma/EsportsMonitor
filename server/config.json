@@ -1,0 +1,94 @@
+{
+  "listen_host": "127.0.0.1",
+  "listen_port": 8080,
+  "behind_proxy": true,
+
+  "agent_key": "CHANGE-ME-to-a-long-random-string",
+  "dashboard_password": "",
+
+  "discord_webhook_url": "",
+  "dashboard_url": "https://esports-monitor.example.com",
+  "alert_on_warnings": true,
+  "alert_on_offline": false,
+
+  "offline_after_minutes": 45,
+  "low_disk_gb": 40,
+
+  "apps": [
+    {
+      "id": "valorant",
+      "name": "Valorant",
+      "rules": [
+        { "type": "file", "path": "<ANYDRIVE>\\Riot Games\\VALORANT\\live\\ShooterGame\\Binaries\\Win64\\VALORANT-Win64-Shipping.exe" },
+        { "type": "file", "path": "<ANYDRIVE>\\Program Files\\Riot Games\\VALORANT\\live\\ShooterGame\\Binaries\\Win64\\VALORANT-Win64-Shipping.exe" }
+      ]
+    },
+    {
+      "id": "vanguard",
+      "name": "Riot Vanguard",
+      "note": "Anti-cheat Valorant needs to launch. Remove this entry if you don't want it tracked.",
+      "rules": [
+        { "type": "service", "name": "vgc" }
+      ]
+    },
+    {
+      "id": "overwatch",
+      "name": "Overwatch",
+      "rules": [
+        { "type": "file", "path": "<ANYDRIVE>\\Program Files (x86)\\Overwatch\\_retail_\\Overwatch.exe" },
+        { "type": "file", "path": "<ANYDRIVE>\\Program Files\\Overwatch\\_retail_\\Overwatch.exe" },
+        { "type": "file", "path": "<ANYDRIVE>\\Overwatch\\_retail_\\Overwatch.exe" },
+        { "type": "steam", "appid": 2357570 },
+        { "type": "uninstall", "display_name": "Overwatch*" }
+      ]
+    },
+    {
+      "id": "rocketleague",
+      "name": "Rocket League",
+      "rules": [
+        { "type": "epic", "app_name": "Sugar", "display_name": "Rocket League*" },
+        { "type": "steam", "appid": 252950 }
+      ]
+    },
+    {
+      "id": "fortnite",
+      "name": "Fortnite",
+      "rules": [
+        { "type": "epic", "app_name": "Fortnite", "display_name": "Fortnite" }
+      ]
+    },
+    {
+      "id": "marvelrivals",
+      "name": "Marvel Rivals",
+      "rules": [
+        { "type": "steam", "appid": 2767030 },
+        { "type": "epic", "display_name": "Marvel Rivals*" }
+      ]
+    },
+    {
+      "id": "apex",
+      "name": "Apex Legends",
+      "rules": [
+        { "type": "steam", "appid": 1172470 },
+        { "type": "epic", "display_name": "Apex Legends*" },
+        { "type": "uninstall", "display_name": "Apex Legends*" }
+      ]
+    },
+    {
+      "id": "spotify",
+      "name": "Spotify",
+      "rules": [
+        { "type": "file", "path": "<USERPROFILE>\\AppData\\Roaming\\Spotify\\Spotify.exe" },
+        { "type": "appx", "package": "SpotifyAB.SpotifyMusic" }
+      ]
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "rules": [
+        { "type": "file", "path": "<USERPROFILE>\\AppData\\Local\\Discord\\app-*\\Discord.exe" },
+        { "type": "file", "path": "<ANYDRIVE>\\Program Files\\Discord\\app-*\\Discord.exe" }
+      ]
+    }
+  ]
+}
